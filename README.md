@@ -30,4 +30,4 @@ inkypi install seniorDashboard_allDay https://github.com/RobinWts/InkyPi-Plugin-
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details.
+This project is licensed under the GNU public License.
