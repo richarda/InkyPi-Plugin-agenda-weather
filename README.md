@@ -1,15 +1,10 @@
-# InkyPi-Plugin-Template
-Use this template for creating new InkyPi plugins.
+# InkyPi-Plugin-seniorDashboard_allDay
 
-See the [wiki page](https://github.com/fatihak/InkyPi/wiki) for an in depth overview of how to get started.
-
-# InkyPi-Plugin-Template
-
-*InkyPi-Template* is a plugin for [InkyPi](https://github.com/fatihak/InkyPi) that displays ... [Plugin description]
+*InkyPi-Plugin-seniorDashboard_allDay* is a plugin for [InkyPi](https://github.com/fatihak/InkyPi) that displays ... [Plugin description]
 
 ## Screenshot
 
-![Example of InkyPi-Plugin-Template](./example.png)
+![Example of InkyPi-Plugin-seniorDashboard_allDay](./example.png)
 
 ## Installation
 
@@ -18,17 +13,10 @@ See the [wiki page](https://github.com/fatihak/InkyPi/wiki) for an in depth over
 Install the plugin using the InkyPi CLI, providing the plugin ID and GitHub repository URL:
 
 ```bash
-inkypi install plugin_template https://github.com/fatihak/InkyPi-Plugin-Template
+inkypi install seniorDashboard_allDay https://github.com/RobinWts/InkyPi-Plugin-seniorDashboard_allDay
 ```
 
-## API Keys
 
-- Login in to your account ... [API Key setup instractions]
-...
-- Store your api key in the .env file with the key `SAMPLE_KEY`
-    ```
-    SAMPLE_KEY=your-key
-    ```
 
 ## License
 
