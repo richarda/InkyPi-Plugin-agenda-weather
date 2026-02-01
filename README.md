@@ -32,7 +32,7 @@ inkypi install seniorDashboard_allDay https://github.com/RobinWts/InkyPi-Plugin-
 
 ## Development-status
 
-Feature complete and done for the moment. Pobably will update in the future if needed.
+Feature complete and done for the moment. Probably will update in the future if needed.
 
 ## License
 
