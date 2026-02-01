@@ -5,7 +5,7 @@
 **What it does:**
 
 - **Calendar** — Displays today and the next two of days in a list. Events that have already ended are hidden. 
-- **Weather** — Shows current conditions and a short forecast (e.g. tomorrow and the day after) in a minimal layout: icon and temperature, with high/low for the next days. Right now it's hardcoded to Darmstad, Germany but a setting will be added soon to change that :)
+- **Weather** — Shows current conditions and a short forecast (e.g. tomorrow and the day after) in a minimal layout: icon and temperature, with high/low for the next days.
 
 Language can be set to **English** or **German**. The layout is kept clear and low-clutter so it works well on an e-ink display and for quick, easy reading.
 
