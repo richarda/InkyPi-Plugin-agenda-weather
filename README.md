@@ -8,14 +8,20 @@
 - **Weather** — Shows current conditions and a short forecast (e.g. tomorrow and the day after) in a minimal layout: icon and temperature, with high/low for the next days.
 It uses the DWD (Deutscher Wetter Dienst) free API, so no API-key config needed.
 
-Language can be set to **English**, **French** , **Spanish**  or **German**. 
-Other languages can easily be added in *constants.py*, just make sure to use the correct international language ID so the calendar returns correct dates/formats.
 The layout is kept clear and low-clutter so it works well on an e-ink display and for quick, easy reading.
 
 It is optimized for and tested only on landscape waveshare 7.2 inch display but should render ok on every comparable landscape display.
 
 It's basically a mix of the calendar list view and weather template.
 No additional dependencies whatsoever.
+
+**Settings:**
+![Screenshot of settings of InkyPi-Plugin-seniorDashboard_allDay](./settings.png)
+Language can be set to **English**, **French** , **Spanish**  or **German**. 
+Other languages can easily be added in *constants.py*, just make sure to use the correct international language ID so the calendar returns correct dates/formats.
+You can add multiple calendars, they will all be used to compile the today, tomorrow and day after tomorrow list.
+Location setting for the weather (DWD supplies world wide weather info).
+Font size for the Calendar listing.
 
 
 ## Screenshot
