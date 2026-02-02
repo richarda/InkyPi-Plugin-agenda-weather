@@ -35,6 +35,11 @@ Install the plugin using the InkyPi CLI, providing the plugin ID and GitHub repo
 inkypi install seniorDashboard_allDay https://github.com/RobinWts/InkyPi-Plugin-seniorDashboard_allDay
 ```
 
+or since I am not sure wether the install endpoint of the InkyPi CLI is implemented yet, simply copy the *seniorDashboard_allDay* folder to your InkyPy plugin-dir (usually ~/InkyPy/scr/plugins) and restart the service with 
+```bash
+sudo systemctl restart inkypi.service
+```
+
 ## Development-status
 
 Feature complete and done for the moment. Probably will update in the future if needed.
