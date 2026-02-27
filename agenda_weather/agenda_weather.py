@@ -304,10 +304,15 @@ class AgendaWeather(BasePlugin):
                         "weathercode": daily.get("weathercode", [0])[i] if i < len(daily.get("weathercode", [])) else 0
                     })
             
-            return {
+            weather_result = {
                 "current": current_weather,
                 "forecast": forecast
             }
+            print(f"[AgendaWeather] Weather data fetched successfully:")
+            print(f"  Current: icon={current_weather['icon']} temp={current_weather['temperature']} windspeed={current_weather['windspeed']} code={current_weather['weathercode']}")
+            for i, day in enumerate(forecast):
+                print(f"  Forecast[{i}]: {day['date']} icon={day['icon']} min={day['temp_min']} max={day['temp_max']} precip={day['precipitation']} code={day['weathercode']}")
+            return weather_result
         except Exception as e:
             logger.warning(f"Failed to fetch weather data: {str(e)}")
             return {
