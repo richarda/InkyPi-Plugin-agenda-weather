@@ -105,7 +105,10 @@ class AgendaWeather(BasePlugin):
             }]
 
         # Fetch weather data (uses locale for forecast day labels)
-        weather_data = self.fetch_weather_data(timezone, locale_code)
+        latitude = settings.get('latitude')
+        longitude = settings.get('longitude')
+        print(f"[AgendaWeather] Weather location from settings: lat={latitude}, lon={longitude}")
+        weather_data = self.fetch_weather_data(timezone, locale_code, latitude, longitude)
 
         template_params = {
             "view": view,
@@ -260,15 +263,21 @@ class AgendaWeather(BasePlugin):
         """Get weather icon emoji for a given weather code."""
         return WEATHER_ICONS.get(code, "❓")
 
-    def fetch_weather_data(self, timezone, locale_code="en"):
+    def fetch_weather_data(self, timezone, locale_code="en", latitude=None, longitude=None):
         """Fetch weather data from Open-Meteo API."""
         URL = "https://api.open-meteo.com/v1/dwd-icon"
         day_labels = LABELS.get(locale_code, LABELS["en"])
 
-        # Default coordinates (can be made configurable later)
+        # Use coordinates from settings, fall back to defaults if not set
+        try:
+            lat = float(latitude) if latitude not in (None, "") else 49.8728
+            lon = float(longitude) if longitude not in (None, "") else 8.6512
+        except (ValueError, TypeError):
+            lat, lon = 49.8728, 8.6512
+
         params = {
-            "latitude": 49.8728,
-            "longitude": 8.6512,
+            "latitude": lat,
+            "longitude": lon,
             "current_weather": True,
             "daily": "temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode",
             "forecast_days": 3,
