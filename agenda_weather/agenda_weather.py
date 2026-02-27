@@ -1,5 +1,5 @@
 from plugins.base_plugin.base_plugin import BasePlugin
-from plugins.seniorDashboard_allDay.constants import LOCALE_MAP, LABELS, FONT_SIZES, WEATHER_ICONS
+from agenda_weather.constants import LOCALE_MAP, LABELS, FONT_SIZES, WEATHER_ICONS
 from PIL import ImageColor
 import icalendar
 import recurring_ical_events
@@ -10,7 +10,7 @@ import pytz
 
 logger = logging.getLogger(__name__)
 
-class SeniorDashboardAllDay(BasePlugin):
+class AgendaWeather(BasePlugin):
     def generate_settings_template(self):
         template_params = super().generate_settings_template()
         template_params['style_settings'] = True
@@ -42,8 +42,8 @@ class SeniorDashboardAllDay(BasePlugin):
         current_dt = datetime.now(tz)
         start, end = self.get_view_range(current_dt)
         print(f"\n{'='*80}")
-        print(f"[SeniorDashboard] Current time: {current_dt}")
-        print(f"[SeniorDashboard] Fetching events from {start} to {end}")
+        print(f"[AgendaWeather] Current time: {current_dt}")
+        print(f"[AgendaWeather] Fetching events from {start} to {end}")
         print(f"{'='*80}\n")
         logger.info(f"Fetching events for this week and next week: {start} --> [{current_dt}] --> {end}")
         events = self.fetch_ics_events(calendar_urls, calendar_colors, tz, start, end, current_dt)
@@ -131,7 +131,7 @@ class SeniorDashboardAllDay(BasePlugin):
         # Use start of current day for filtering (not current time)
         current_day_start = current_dt.replace(hour=0, minute=0, second=0, microsecond=0)
         
-        print(f"[SeniorDashboard] Current day start for filtering: {current_day_start}")
+        print(f"[AgendaWeather] Current day start for filtering: {current_day_start}")
 
         for calendar_url, color in zip(calendar_urls, colors):
             cal = self.fetch_calendar(calendar_url)
@@ -139,14 +139,14 @@ class SeniorDashboardAllDay(BasePlugin):
             contrast_color = self.get_contrast_color(color)
             
             events_list = list(events)
-            print(f"[SeniorDashboard] Fetched {len(events_list)} events from calendar")
+            print(f"[AgendaWeather] Fetched {len(events_list)} events from calendar")
             
             event_num = 0
             for event in events_list:
                 event_num += 1
                 start, end, all_day = self.parse_data_points(event, tz)
                 event_title = str(event.get('summary'))
-                print(f"[SeniorDashboard] Event #{event_num}: '{event_title}'")
+                print(f"[AgendaWeather] Event #{event_num}: '{event_title}'")
                 print(f"                  Start: {start} | End: {end} | All-day: {all_day}")
                 
                 # Filter out events that have fully ended (before today, or already ended today)
@@ -185,7 +185,7 @@ class SeniorDashboardAllDay(BasePlugin):
 
                 parsed_events.append(parsed_event)
         
-        print(f"\n[SeniorDashboard] Total events after filtering: {len(parsed_events)}")
+        print(f"\n[AgendaWeather] Total events after filtering: {len(parsed_events)}")
         print(f"{'='*80}\n")
         return parsed_events
     

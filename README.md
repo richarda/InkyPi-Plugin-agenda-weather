@@ -1,7 +1,7 @@
-# InkyPi-Plugin-seniorDashboard_allDay
-![Example of InkyPi-Plugin-seniorDashboard_allDay](./example.png)
+# InkyPi-Plugin-agenda_weather
+![Example of InkyPi-Plugin-agenda_weather](./example.png)
 
-*InkyPi-Plugin-seniorDashboard_allDay* is a plugin for [InkyPi](https://github.com/fatihak/InkyPi) that shows a simple, at-a-glance view of the next few days: a calendar list and a small weather block. It is intended for an elderly person who has a calendar maintained for them by a family member or carer.
+*InkyPi-Plugin-agenda_weather* is a plugin for [InkyPi](https://github.com/fatihak/InkyPi) that shows a simple, at-a-glance view of the next few days: a calendar list and a small weather block. It is intended for an elderly person who has a calendar maintained for them by a family member or carer.
 
 **What it does:**
 
@@ -17,7 +17,7 @@ It's basically a mix of the calendar list view and weather template.
 No additional dependencies whatsoever.
 
 **Settings:**
-![Screenshot of settings of InkyPi-Plugin-seniorDashboard_allDay](./settings.png)
+![Screenshot of settings of InkyPi-Plugin-agenda_weather](./settings.png)
 Language can be set to **English**, **French** , **Spanish**  or **German**. 
 Other languages can easily be added in *constants.py*, just make sure to use the correct international language ID so the calendar returns correct dates/formats.
 You can add multiple calendars, they will all be used to compile the today, tomorrow and day after tomorrow list.
@@ -32,7 +32,7 @@ Font size for the Calendar listing.
 Install the plugin using the InkyPi CLI, providing the plugin ID and GitHub repository URL:
 
 ```bash
-inkypi plugin install seniorDashboard_allDay https://github.com/RobinWts/InkyPi-Plugin-seniorDashboard_allDay
+inkypi plugin install agenda_weather https://github.com/RobinWts/InkyPi-Plugin-agenda-weather
 ```
 
 or install the [PluginManager](https://github.com/RobinWts/InkyPi-Plugin-PluginManager) first and use that to install via WebUI.

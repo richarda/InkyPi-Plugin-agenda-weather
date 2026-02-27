@@ -1,0 +1,6 @@
+{
+    "display_name": "Agenda and Weather",
+    "id": "agenda_weather",
+    "class": "AgendaWeather",
+    "repository": "https://github.com/richarda/InkyPi-Plugin-agenda-weather"
+}

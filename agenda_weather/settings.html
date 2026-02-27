@@ -52,7 +52,7 @@
         <span class="close-button" onclick="closeModal('mapModal')">×</span>
         <h2 id="modalTitle">Select Location</h2>
         <div class="separator"></div>
-        <div id="seniorDashboardMap" style="width: 100%; height: 200px; margin: 10px 0px;"></div>
+        <div id="agendaWeatherMap" style="width: 100%; height: 200px; margin: 10px 0px;"></div>
         <button id="closeMap" class="action-button">Save</button>
     </div>
 </div>
@@ -135,7 +135,7 @@
             openModal('mapModal');
             setTimeout(() => {
                 if (!map) {
-                    map = L.map('seniorDashboardMap').setView([mapLat, mapLon], zoom);
+                    map = L.map('agendaWeatherMap').setView([mapLat, mapLon], zoom);
                     L.tileLayer(OSM_TILE_URL).addTo(map);
                     marker = L.marker([mapLat, mapLon], { draggable: true }).addTo(map);
                     map.on('click', (event) => {
