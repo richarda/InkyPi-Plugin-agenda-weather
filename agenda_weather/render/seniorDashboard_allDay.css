@@ -102,6 +102,62 @@ body,
   color: #666;
 }
 
+/* Today's min/max and hourly snapshot temps */
+.weather-today {
+  width: 100%;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.weather-today-minmax {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: calc(1.1 * 1.4 * var(--fc-table-font-size, 1em));
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.weather-today-min {
+  color: #2978d4;
+}
+
+.weather-today-sep {
+  color: #555;
+  font-weight: normal;
+}
+
+.weather-today-max {
+  color: #d44a29;
+}
+
+.weather-today-hourly {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}
+
+.weather-today-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+
+.weather-today-slot-time {
+  font-size: calc(0.8 * var(--fc-table-font-size, 1em));
+  color: #555;
+}
+
+.weather-today-slot-temp {
+  font-size: calc(1 * 1.2 * var(--fc-table-font-size, 1em));
+  font-weight: bold;
+}
+
 .weather-forecast {
   width: 100%;
 }

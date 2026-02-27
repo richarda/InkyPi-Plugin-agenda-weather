@@ -33,6 +33,30 @@
                 </div>
                 {% endif %}
 
+                {% if weather and weather.today %}
+                <div class="weather-today">
+                    {% if weather.today.temp_min is not none and weather.today.temp_max is not none %}
+                    <div class="weather-today-minmax">
+                        <span class="weather-today-min">{{ ((weather.today.temp_min * 9 / 5) + 32)|round|int }}°</span>
+                        <span class="weather-today-sep"> – </span>
+                        <span class="weather-today-max">{{ ((weather.today.temp_max * 9 / 5) + 32)|round|int }}°F</span>
+                    </div>
+                    {% endif %}
+                    {% if weather.today.hourly %}
+                    <div class="weather-today-hourly">
+                        {% for key, label12, label24 in [("8am", "8am", "08:00"), ("noon", "Noon", "12:00"), ("3pm", "3pm", "15:00")] %}
+                        {% if key in weather.today.hourly %}
+                        <div class="weather-today-slot">
+                            <span class="weather-today-slot-time">{{ label12 if time_format == "12h" else label24 }}</span>
+                            <span class="weather-today-slot-temp">{{ ((weather.today.hourly[key] * 9 / 5) + 32)|round|int }}°</span>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
                 {% if weather and weather.forecast %}
                 <div class="weather-forecast">
                     {% for day in weather.forecast %}

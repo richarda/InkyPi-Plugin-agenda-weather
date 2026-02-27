@@ -280,6 +280,7 @@ class AgendaWeather(BasePlugin):
             "longitude": lon,
             "current_weather": True,
             "daily": "temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode",
+            "hourly": "temperature_2m",
             "forecast_days": 3,
             "timezone": timezone
         }
@@ -298,27 +299,62 @@ class AgendaWeather(BasePlugin):
                 "weathercode": current.get("weathercode", 0)
             }
             
-            # Process daily forecast (first 2 days: tomorrow and day after)
+            # Process daily data (index 0 = today, 1 = tomorrow, 2 = day after)
             daily = data.get("daily", {})
+
+            # --- Today's min/max and hourly snapshots ---
+            today_str = daily.get("time", [None])[0]  # e.g. "2026-02-27"
+            today_weather = None
+            if today_str:
+                temp_min_list = daily.get("temperature_2m_min", [])
+                temp_max_list = daily.get("temperature_2m_max", [])
+                wcode_list    = daily.get("weathercode", [])
+                today_min  = temp_min_list[0] if temp_min_list else None
+                today_max  = temp_max_list[0] if temp_max_list else None
+                today_code = wcode_list[0]    if wcode_list    else 0
+
+                # Extract hourly temps at 08:00, 12:00, and 15:00 for today
+                hourly_times = data.get("hourly", {}).get("time", [])
+                hourly_temps = data.get("hourly", {}).get("temperature_2m", [])
+                target_hours = {8: "8am", 12: "noon", 15: "3pm"}
+                hourly_today = {}
+                for idx, t in enumerate(hourly_times):
+                    if t.startswith(today_str) and idx < len(hourly_temps):
+                        hour = int(t[11:13])
+                        if hour in target_hours:
+                            hourly_today[target_hours[hour]] = hourly_temps[idx]
+
+                today_weather = {
+                    "temp_min": today_min,
+                    "temp_max": today_max,
+                    "icon": self.get_weather_icon(today_code),
+                    "weathercode": today_code,
+                    "hourly": hourly_today,  # keys: "8am", "noon", "3pm"
+                }
+
+            # --- Forecast: tomorrow and day after tomorrow ---
             forecast = []
             if "time" in daily:
-                for i, day in enumerate(daily["time"][:2]):
-                    date_label = day_labels["tomorrow"] if i == 0 else day_labels["dayAfterTomorrow"]
+                for i, day in enumerate(daily["time"][1:3], start=1):
+                    label_key = "tomorrow" if i == 1 else "dayAfterTomorrow"
                     forecast.append({
-                        "date": date_label,
+                        "date": day_labels[label_key],
                         "icon": self.get_weather_icon(daily.get("weathercode", [0])[i] if i < len(daily.get("weathercode", [])) else 0),
                         "temp_min": daily.get("temperature_2m_min", [0])[i] if i < len(daily.get("temperature_2m_min", [])) else 0,
                         "temp_max": daily.get("temperature_2m_max", [0])[i] if i < len(daily.get("temperature_2m_max", [])) else 0,
                         "precipitation": daily.get("precipitation_sum", [0])[i] if i < len(daily.get("precipitation_sum", [])) else 0,
                         "weathercode": daily.get("weathercode", [0])[i] if i < len(daily.get("weathercode", [])) else 0
                     })
-            
+
             weather_result = {
                 "current": current_weather,
+                "today": today_weather,
                 "forecast": forecast
             }
             print(f"[AgendaWeather] Weather data fetched successfully:")
             print(f"  Current: icon={current_weather['icon']} temp={current_weather['temperature']} windspeed={current_weather['windspeed']} code={current_weather['weathercode']}")
+            if today_weather:
+                print(f"  Today: min={today_weather['temp_min']} max={today_weather['temp_max']} code={today_weather['weathercode']} hourly={today_weather['hourly']}")
             for i, day in enumerate(forecast):
                 print(f"  Forecast[{i}]: {day['date']} icon={day['icon']} min={day['temp_min']} max={day['temp_max']} precip={day['precipitation']} code={day['weathercode']}")
             return weather_result
