@@ -1,5 +1,5 @@
 from plugins.base_plugin.base_plugin import BasePlugin
-from agenda_weather.constants import LOCALE_MAP, LABELS, FONT_SIZES, WEATHER_ICONS
+from plugins.agenda_weather.constants import LOCALE_MAP, LABELS, FONT_SIZES, WEATHER_ICONS
 from PIL import ImageColor
 import icalendar
 import recurring_ical_events
