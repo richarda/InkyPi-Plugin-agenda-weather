@@ -405,7 +405,7 @@ def _draw_event_row(
         time_str = _format_event_time(ev, time_format, timezone_str)
 
     if time_str:
-        draw.text((text_x, y + event_padding), time_str, fill=MED_GRAY, font=font)
+        draw.text((text_x, y + event_padding), time_str, fill=fg, font=font)
         time_w = draw.textbbox((0, 0), time_str, font=font)[2] + padding
         title_x = text_x + time_w
     else:
@@ -572,20 +572,19 @@ def _draw_weather(
         draw.text((x, y), date_label, fill=fg, font=font_sm_bold)
         y += font_sm_bold.size + int(10 * font_scale)
 
-        # Row 2: icon + condition description (vertically centred on icon)
+        # Row 2: icon (left) + temp range in larger font (right, vertically centred)
         fc_icon = _load_weather_icon(day.get("icon_path"), forecast_icon_size)
         if fc_icon:
             _paste_icon(img, fc_icon, x, y)
-            desc_x = x + forecast_icon_size + int(6 * font_scale)
+            text_x = x + forecast_icon_size + int(10 * font_scale)
         else:
-            desc_x = x
-        desc_y = y + (forecast_icon_size - font_sm.size) // 2
-        draw.text((desc_x, desc_y), desc, fill=fg, font=font_sm)
+            text_x = x
+        temp_str = f"{lo}–{hi}{suffix}"
+        temp_y = y
+        draw.text((text_x, temp_y), temp_str, fill=fg, font=font_med)
+        desc_y = temp_y + font_med.size + int(2 * font_scale)
+        draw.text((text_x, desc_y), desc, fill=fg, font=font_sm)
         y += forecast_icon_size + int(4 * font_scale)
-
-        # Row 3: temp range
-        draw.text((x, y), f"{lo}–{hi}{suffix}", fill=fg, font=font_sm)
-        y += font_sm.size + gap
 
         # divider
         draw.line([(x, y), (x + w, y)], fill=LIGHT_GRAY, width=1)
