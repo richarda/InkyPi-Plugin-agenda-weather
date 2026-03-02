@@ -8,6 +8,7 @@ any resolution.
 from __future__ import annotations
 
 import logging
+import os
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -26,6 +27,27 @@ BLUE = (0, 0, 255)
 YELLOW = (255, 200, 0)
 ORANGE = (255, 128, 0)
 LIGHT_GRAY = (200, 200, 200)
+
+
+def _load_weather_icon(icon_path: str | None, size: int) -> Image.Image | None:
+    """Load a weather icon from *icon_path* and resize to *size*×*size*.
+
+    Returns ``None`` when the path is missing or the file cannot be opened.
+    """
+    if not icon_path or not os.path.isfile(icon_path):
+        return None
+    try:
+        icon = Image.open(icon_path).convert("RGBA")
+        icon = icon.resize((size, size), Image.LANCZOS)
+        return icon
+    except Exception as exc:
+        logger.warning("Failed to load weather icon %s: %s", icon_path, exc)
+        return None
+
+
+def _paste_icon(img: Image.Image, icon: Image.Image, x: int, y: int):
+    """Paste an RGBA icon onto *img* at (x, y) using the alpha channel as mask."""
+    img.paste(icon, (x, y), icon)
 
 # ── simple ASCII weather symbols (no emoji needed) ────────────────────
 WEATHER_SYMBOLS: dict[int, str] = {
@@ -118,6 +140,7 @@ def render_dashboard(
     draw = ImageDraw.Draw(img)
 
     # ── fonts ──────────────────────────────────────────────────────────
+    base_size = int(18 * font_scale)
     title_size = int(28 * font_scale)
     header_size = int(20 * font_scale)
     event_size = int(17 * font_scale)
@@ -140,7 +163,8 @@ def render_dashboard(
     title_h = title_size + padding * 2
 
     # ── 1. title bar ──────────────────────────────────────────────────
-    _draw_title_bar(draw, img, width, title_h, current_dt, font_title, fg, bg, padding)
+    _draw_title_bar(draw, img, width, title_h, current_dt, locale_code,
+                    timezone_str, font_title, fg, bg, padding)
 
     # ── 2. vertical divider ────────────────────────────────────────────
     draw.line([(divider_x, title_h), (divider_x, height)], fill=LIGHT_GRAY, width=1)
@@ -159,7 +183,7 @@ def render_dashboard(
     wy = title_h + padding
     w_width = width - wx - padding
     _draw_weather(
-        draw, weather, units, labels, time_format,
+        draw, img, weather, units, labels, time_format,
         font_weather_big, font_weather_med, font_weather_sm, font_weather_sm_bold,
         fg, bg, wx, wy, w_width, height - wy - padding, font_scale,
     )
@@ -180,6 +204,8 @@ def _draw_title_bar(
     width: int,
     title_h: int,
     current_dt: datetime,
+    locale_code: str,
+    timezone_str: str,
     font: ImageFont.FreeTypeFont,
     fg: tuple,
     bg: tuple,
@@ -397,6 +423,7 @@ def _truncate_text(draw: ImageDraw.ImageDraw, text: str, font, max_w: int) -> st
 
 def _draw_weather(
     draw: ImageDraw.ImageDraw,
+    img: Image.Image,
     weather: dict | None,
     units: str,
     labels: dict,
@@ -428,10 +455,13 @@ def _draw_weather(
         code = current.get("weathercode", 0)
         desc = WEATHER_SYMBOLS.get(code, "?")
 
-        draw.text((x, y), temp, fill=fg, font=font_big)
+        # No icon for current conditions; use text description only
+        icon_offset = 0
+
+        draw.text((x + icon_offset, y), temp, fill=fg, font=font_big)
         temp_w = draw.textbbox((0, 0), temp, font=font_big)
         y_desc = y + (font_big.size - font_sm.size)
-        draw.text((x + temp_w[2] + int(10 * font_scale), y_desc), desc, fill=fg, font=font_sm)
+        draw.text((x + icon_offset + temp_w[2] + int(10 * font_scale), y_desc), desc, fill=fg, font=font_sm)
         y += font_big.size + gap
 
     # ── today min/max ──────────────────────────────────────────────────
@@ -442,8 +472,11 @@ def _draw_weather(
             lo = _convert_temp_short(t_min, units)
             hi = _convert_temp_short(t_max, units)
             suffix = _unit_suffix(units)
+            range_text = f"{lo} – {hi}{suffix}"
 
+            draw.text((x, y), range_text, fill=fg, font=font_med)
             # Colour code min/max
+            lo_bbox = draw.textbbox((x, y), lo, font=font_med)
             draw.text((x, y), lo, fill=BLUE, font=font_med)
 
             sep_text = f"{lo} – "
@@ -475,6 +508,7 @@ def _draw_weather(
         y += gap
 
     # ── forecast ───────────────────────────────────────────────────────
+    forecast_icon_size = font_sm_bold.size + 4
     for day in forecast:
         date_label = day.get("date", "")
         code = day.get("weathercode", 0)
@@ -488,9 +522,17 @@ def _draw_weather(
         draw.text((x, y), date_label, fill=fg, font=font_sm_bold)
         y += font_sm_bold.size + 2
 
+        # weather icon + description + temp range
+        fc_icon = _load_weather_icon(day.get("icon_path"), forecast_icon_size)
+        if fc_icon:
+            _paste_icon(img, fc_icon, x, y)
+            desc_x = x + forecast_icon_size + int(6 * font_scale)
+        else:
+            desc_x = x
+
         desc_text = f"{desc}   {lo}–{hi}{suffix}"
-        draw.text((x, y), desc_text, fill=fg, font=font_sm)
-        y += font_sm.size + gap
+        draw.text((desc_x, y), desc_text, fill=fg, font=font_sm)
+        y += max(font_sm.size, forecast_icon_size) + gap
 
         # divider
         draw.line([(x, y), (x + w, y)], fill=LIGHT_GRAY, width=1)

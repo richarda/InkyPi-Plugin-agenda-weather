@@ -83,3 +83,36 @@ WEATHER_ICONS = {
     96: "⛈️",
     99: "⛈️",
 }
+
+# Mapping from Open-Meteo weather codes to icon filenames (without extension).
+# Mirrors the weather plugin's map_weather_code_to_icon logic.
+WEATHERCODE_TO_ICON = {
+    0:  "01d",   # Clear sky
+    1:  "022d",  # Mainly clear
+    2:  "02d",   # Partly cloudy
+    3:  "04d",   # Overcast
+    45: "50d",   # Fog
+    48: "48d",   # Icy fog
+    51: "51d",   # Light drizzle / light rain / light showers
+    53: "53d",   # Moderate drizzle / rain / showers
+    55: "09d",   # Heavy drizzle / rain / showers
+    56: "56d",   # Light freezing drizzle
+    57: "57d",   # Freezing drizzle
+    61: "51d",   # Light rain
+    63: "53d",   # Moderate rain
+    65: "09d",   # Heavy rain
+    66: "56d",   # Light freezing rain
+    67: "57d",   # Freezing rain
+    71: "71d",   # Slight snow
+    73: "73d",   # Moderate snow
+    75: "13d",   # Heavy snow
+    77: "77d",   # Snow grains
+    80: "51d",   # Light showers
+    81: "53d",   # Moderate showers
+    82: "09d",   # Heavy showers
+    85: "71d",   # Slight snow showers
+    86: "13d",   # Heavy snow showers
+    95: "11d",   # Thunderstorm
+    96: "11d",   # Thunderstorm with slight hail
+    99: "11d",   # Thunderstorm with heavy hail
+}

@@ -1,5 +1,5 @@
 from plugins.base_plugin.base_plugin import BasePlugin
-from plugins.agenda_weather.constants import LOCALE_MAP, LABELS, FONT_SIZES, WEATHER_ICONS
+from plugins.agenda_weather.constants import LOCALE_MAP, LABELS, FONT_SIZES, WEATHER_ICONS, WEATHERCODE_TO_ICON
 from plugins.agenda_weather.render.pil_renderer import render_dashboard
 from PIL import ImageColor
 import icalendar
@@ -269,6 +269,11 @@ class AgendaWeather(BasePlugin):
         """Get weather icon emoji for a given weather code."""
         return WEATHER_ICONS.get(code, "❓")
 
+    def get_weather_icon_path(self, code):
+        """Get the file path for a weather condition icon by weather code."""
+        icon_name = WEATHERCODE_TO_ICON.get(code, "01d")
+        return self.get_plugin_dir(f'icons/{icon_name}.png')
+
     def fetch_weather_data(self, timezone, locale_code="en", latitude=None, longitude=None):
         """Fetch weather data from Open-Meteo API."""
         URL = "https://api.open-meteo.com/v1/dwd-icon"
@@ -300,6 +305,7 @@ class AgendaWeather(BasePlugin):
             current = data.get("current_weather", {})
             current_weather = {
                 "icon": self.get_weather_icon(current.get("weathercode", 0)),
+                "icon_path": self.get_weather_icon_path(current.get("weathercode", 0)),
                 "temperature": current.get("temperature", 0),
                 "windspeed": current.get("windspeed", 0),
                 "weathercode": current.get("weathercode", 0)
@@ -319,7 +325,7 @@ class AgendaWeather(BasePlugin):
                 today_max  = temp_max_list[0] if temp_max_list else None
                 today_code = wcode_list[0]    if wcode_list    else 0
 
-                # Extract hourly temps at 08:00, 12:00, and 15:00 for today
+                # Extract hourly temps at 08:00, 12:00, 15:00, and 20:00 for today
                 hourly_times = data.get("hourly", {}).get("time", [])
                 hourly_temps = data.get("hourly", {}).get("temperature_2m", [])
                 target_hours = {8: "8am", 12: "noon", 15: "3pm", 20: "8pm"}
@@ -334,6 +340,7 @@ class AgendaWeather(BasePlugin):
                     "temp_min": today_min,
                     "temp_max": today_max,
                     "icon": self.get_weather_icon(today_code),
+                    "icon_path": self.get_weather_icon_path(today_code),
                     "weathercode": today_code,
                     "hourly": hourly_today,  # keys: "8am", "noon", "3pm"
                 }
@@ -343,13 +350,15 @@ class AgendaWeather(BasePlugin):
             if "time" in daily:
                 for i, day in enumerate(daily["time"][1:3], start=1):
                     label_key = "tomorrow" if i == 1 else "dayAfterTomorrow"
+                    wcode = daily.get("weathercode", [0])[i] if i < len(daily.get("weathercode", [])) else 0
                     forecast.append({
                         "date": day_labels[label_key],
-                        "icon": self.get_weather_icon(daily.get("weathercode", [0])[i] if i < len(daily.get("weathercode", [])) else 0),
+                        "icon": self.get_weather_icon(wcode),
+                        "icon_path": self.get_weather_icon_path(wcode),
                         "temp_min": daily.get("temperature_2m_min", [0])[i] if i < len(daily.get("temperature_2m_min", [])) else 0,
                         "temp_max": daily.get("temperature_2m_max", [0])[i] if i < len(daily.get("temperature_2m_max", [])) else 0,
                         "precipitation": daily.get("precipitation_sum", [0])[i] if i < len(daily.get("precipitation_sum", [])) else 0,
-                        "weathercode": daily.get("weathercode", [0])[i] if i < len(daily.get("weathercode", [])) else 0
+                        "weathercode": wcode
                     })
 
             weather_result = {
