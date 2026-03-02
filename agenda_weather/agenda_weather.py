@@ -291,7 +291,7 @@ class AgendaWeather(BasePlugin):
             "longitude": lon,
             "current_weather": True,
             "daily": "temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode",
-            "hourly": "temperature_2m",
+            "hourly": "temperature_2m,weathercode",
             "forecast_days": 3,
             "timezone": timezone
         }
@@ -325,16 +325,24 @@ class AgendaWeather(BasePlugin):
                 today_max  = temp_max_list[0] if temp_max_list else None
                 today_code = wcode_list[0]    if wcode_list    else 0
 
-                # Extract hourly temps at 08:00, 12:00, 15:00, and 20:00 for today
+                # Extract hourly temps and weathercodes at 08:00, 12:00, 15:00, and 20:00 for today
                 hourly_times = data.get("hourly", {}).get("time", [])
                 hourly_temps = data.get("hourly", {}).get("temperature_2m", [])
+                hourly_codes = data.get("hourly", {}).get("weathercode", [])
                 target_hours = {8: "8am", 12: "noon", 15: "3pm", 20: "8pm"}
                 hourly_today = {}
                 for idx, t in enumerate(hourly_times):
                     if t.startswith(today_str) and idx < len(hourly_temps):
                         hour = int(t[11:13])
                         if hour in target_hours:
-                            hourly_today[target_hours[hour]] = hourly_temps[idx]
+                            key = target_hours[hour]
+                            hourly_today[key] = {
+                                "temp": hourly_temps[idx],
+                                "code": hourly_codes[idx] if idx < len(hourly_codes) else 0,
+                                "icon_path": self.get_weather_icon_path(
+                                    hourly_codes[idx] if idx < len(hourly_codes) else 0
+                                ),
+                            }
 
                 today_weather = {
                     "temp_min": today_min,
@@ -349,10 +357,10 @@ class AgendaWeather(BasePlugin):
             forecast = []
             if "time" in daily:
                 for i, day in enumerate(daily["time"][1:3], start=1):
-                    label_key = "tomorrow" if i == 1 else "dayAfterTomorrow"
+                    day_name = datetime.strptime(day, "%Y-%m-%d").strftime("%A")
                     wcode = daily.get("weathercode", [0])[i] if i < len(daily.get("weathercode", [])) else 0
                     forecast.append({
-                        "date": day_labels[label_key],
+                        "date": day_name,
                         "icon": self.get_weather_icon(wcode),
                         "icon_path": self.get_weather_icon_path(wcode),
                         "temp_min": daily.get("temperature_2m_min", [0])[i] if i < len(daily.get("temperature_2m_min", [])) else 0,

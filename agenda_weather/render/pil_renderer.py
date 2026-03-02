@@ -19,14 +19,17 @@ from utils.app_utils import get_font
 logger = logging.getLogger(__name__)
 
 # ── colour palette (7-colour Inky Impression safe) ────────────────────
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-RED = (224, 0, 0)
-GREEN = (0, 200, 0)
-BLUE = (0, 0, 255)
-YELLOW = (255, 200, 0)
-ORANGE = (255, 128, 0)
-LIGHT_GRAY = (200, 200, 200)
+WHITE      = (255, 255, 255)
+BLACK      = (0,   0,   0)
+RED        = (224, 0,   0)
+GREEN      = (0,   200, 0)
+BLUE       = (0,   0,   255)
+YELLOW     = (255, 200, 0)
+ORANGE     = (255, 128, 0)
+DARK_BLUE  = (0,   50,  140)   # deeper blue for tomorrow/day-after headers
+DARK_GRAY  = (80,  80,  80)    # secondary text
+MED_GRAY   = (150, 150, 150)   # subtle text / borders
+LIGHT_GRAY = (218, 218, 218)   # dividers / slot backgrounds
 
 
 def _load_weather_icon(icon_path: str | None, size: int) -> Image.Image | None:
@@ -49,7 +52,30 @@ def _paste_icon(img: Image.Image, icon: Image.Image, x: int, y: int):
     """Paste an RGBA icon onto *img* at (x, y) using the alpha channel as mask."""
     img.paste(icon, (x, y), icon)
 
-# ── simple ASCII weather symbols (no emoji needed) ────────────────────
+# ── compact weather labels for small slots ───────────────────────────
+WEATHER_SYMBOLS_SHORT: dict[int, str] = {
+    0: "Clear",
+    1: "Clear",
+    2: "P.Cloudy",
+    3: "Overcast",
+    45: "Fog",
+    48: "Fog",
+    51: "Drizzle",
+    53: "Drizzle",
+    55: "Drizzle",
+    61: "Lt Rain",
+    63: "Rain",
+    65: "Hvy Rain",
+    71: "Lt Snow",
+    73: "Snow",
+    75: "Hvy Snow",
+    80: "Showers",
+    81: "Showers",
+    82: "Showers",
+    95: "Thunder",
+    96: "Thunder",
+    99: "Thunder",
+}
 WEATHER_SYMBOLS: dict[int, str] = {
     0: "Clear",
     1: "Mostly Clear",
@@ -140,7 +166,6 @@ def render_dashboard(
     draw = ImageDraw.Draw(img)
 
     # ── fonts ──────────────────────────────────────────────────────────
-    base_size = int(18 * font_scale)
     title_size = int(28 * font_scale)
     header_size = int(20 * font_scale)
     event_size = int(17 * font_scale)
@@ -163,11 +188,8 @@ def render_dashboard(
     title_h = title_size + padding * 2
 
     # ── 1. title bar ──────────────────────────────────────────────────
-    _draw_title_bar(draw, img, width, title_h, current_dt, locale_code,
-                    timezone_str, font_title, fg, bg, padding)
+    _draw_title_bar(draw, width, title_h, current_dt, font_title, padding)
 
-    # ── 2. vertical divider ────────────────────────────────────────────
-    draw.line([(divider_x, title_h), (divider_x, height)], fill=LIGHT_GRAY, width=1)
 
     # ── 3. calendar (left column) ─────────────────────────────────────
     cal_y = title_h + padding
@@ -179,7 +201,7 @@ def render_dashboard(
     )
 
     # ── 4. weather (right column) ─────────────────────────────────────
-    wx = divider_x + padding
+    wx = divider_x + padding * 2
     wy = title_h + padding
     w_width = width - wx - padding
     _draw_weather(
@@ -200,30 +222,25 @@ def _parse_color(color_str: str) -> tuple[int, int, int]:
 
 def _draw_title_bar(
     draw: ImageDraw.ImageDraw,
-    img: Image.Image,
     width: int,
     title_h: int,
     current_dt: datetime,
-    locale_code: str,
-    timezone_str: str,
     font: ImageFont.FreeTypeFont,
-    fg: tuple,
-    bg: tuple,
     padding: int,
 ):
     """Draw the full-width date title at the top of the dashboard."""
-    # Format using Python's strftime (locale-independent but good enough)
-    title_text = current_dt.strftime("%A, %B %-d, %Y")
+    # Solid black background
+    draw.rectangle([(0, 0), (width, title_h)], fill=BLACK)
 
-    # Draw centred
+    title_text = current_dt.strftime("%A, %B %-d, %Y").upper()
     bbox = draw.textbbox((0, 0), title_text, font=font)
-    tw = bbox[2] - bbox[0]
+    tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
     tx = (width - tw) // 2
-    ty = padding
-    draw.text((tx, ty), title_text, fill=fg, font=font)
+    ty = (title_h - th) // 2
+    draw.text((tx, ty), title_text, fill=WHITE, font=font)
 
-    # Underline
-    draw.line([(0, title_h), (width, title_h)], fill=LIGHT_GRAY, width=1)
+    # Orange accent stripe at the base of the title bar
+    draw.rectangle([(0, title_h - 4), (width, title_h)], fill=ORANGE)
 
 
 def _draw_calendar(
@@ -251,32 +268,46 @@ def _draw_calendar(
     y = y0
     day_labels = [
         labels.get("today", "Today"),
-        labels.get("tomorrow", "Tomorrow"),
-        labels.get("dayAfterTomorrow", "Day after tomorrow"),
+        (current_dt + timedelta(days=1)).strftime("%A"),
+        (current_dt + timedelta(days=2)).strftime("%A"),
     ]
     day_dates = [
         current_dt.date(),
         current_dt.date() + timedelta(days=1),
         current_dt.date() + timedelta(days=2),
     ]
-    day_colors = [GREEN, BLUE, BLUE]
+    day_colors = [BLACK, DARK_BLUE, DARK_BLUE]
 
-    header_h = int(28 * font_scale)
-    event_line_h = int(24 * font_scale)
-    event_padding = int(4 * font_scale)
+    header_h = int(32 * font_scale)
+    event_line_h = int(26 * font_scale)
+    event_padding = int(5 * font_scale)
 
     for i, (label, date, header_bg) in enumerate(zip(day_labels, day_dates, day_colors)):
         if y + header_h > y_max:
             break
 
         # ── day header ─────────────────────────────────────────────────
-        header_text = f"{label}: {date.strftime('%A, %B %-d, %Y')}"
         draw.rectangle([(x0, y), (x1, y + header_h)], fill=header_bg)
+        # Left accent stripe (orange for today, yellow for future days)
+        accent_col = ORANGE if i == 0 else YELLOW
+        draw.rectangle([(x0, y), (x0 + 5, y + header_h)], fill=accent_col)
+        label_text = label.upper()
+        date_text  = date.strftime("%-d %b")          # compact: "1 Mar"
+        label_bbox = draw.textbbox((0, 0), label_text, font=font_header)
+        label_w    = label_bbox[2] - label_bbox[0]
+        date_font  = get_font("Jost", int(font_header.size * 0.82)) or font_header
+        sep        = "  ·  "
+        sep_bbox   = draw.textbbox((0, 0), sep, font=date_font)
+        text_y     = y + (header_h - (label_bbox[3] - label_bbox[1])) // 2
+        tx         = x0 + 5 + padding
+        draw.text((tx, text_y), label_text, fill=WHITE, font=font_header)
         draw.text(
-            (x0 + padding, y + (header_h - font_header.size) // 2),
-            header_text,
-            fill=WHITE,
-            font=font_header,
+            (tx + label_w + sep_bbox[2] - sep_bbox[0], text_y + int(1 * font_scale)),
+            date_text, fill=LIGHT_GRAY, font=date_font,
+        )
+        draw.text(
+            (tx + label_w, text_y + int(1 * font_scale)),
+            sep, fill=MED_GRAY, font=date_font,
         )
         y += header_h
 
@@ -354,17 +385,16 @@ def _draw_event_row(
 
     is_placeholder = "senior-dashboard-nothing-more" in (ev.get("classNames") or [])
 
-    # colour dot
-    dot_r = 5
-    dot_x = x0 + padding + dot_r
-    dot_y = y + event_padding + line_h // 2
-    dot_color = _parse_color(ev.get("backgroundColor", "#007BFF"))
-    draw.ellipse(
-        [(dot_x - dot_r, dot_y - dot_r), (dot_x + dot_r, dot_y + dot_r)],
-        fill=dot_color,
+    # Left-edge colour accent bar
+    bar_w     = 5
+    bar_color = _parse_color(ev.get("backgroundColor", "#007BFF"))
+    draw.rectangle(
+        [(x0 + padding, y + event_padding),
+         (x0 + padding + bar_w, y + event_padding + line_h - 2)],
+        fill=bar_color,
     )
 
-    text_x = dot_x + dot_r + padding
+    text_x = x0 + padding + bar_w + padding
 
     # time label
     if ev.get("allDay") and not is_placeholder:
@@ -375,7 +405,7 @@ def _draw_event_row(
         time_str = _format_event_time(ev, time_format, timezone_str)
 
     if time_str:
-        draw.text((text_x, y + event_padding), time_str, fill=LIGHT_GRAY, font=font)
+        draw.text((text_x, y + event_padding), time_str, fill=MED_GRAY, font=font)
         time_w = draw.textbbox((0, 0), time_str, font=font)[2] + padding
         title_x = text_x + time_w
     else:
@@ -455,37 +485,21 @@ def _draw_weather(
         code = current.get("weathercode", 0)
         desc = WEATHER_SYMBOLS.get(code, "?")
 
-        # No icon for current conditions; use text description only
-        icon_offset = 0
-
-        draw.text((x + icon_offset, y), temp, fill=fg, font=font_big)
+        cur_icon_sz = int(56 * font_scale)
+        cur_icon = _load_weather_icon(current.get("icon_path"), cur_icon_sz)
+        if cur_icon:
+            _paste_icon(img, cur_icon, x, y)
+            tx = x + cur_icon_sz + int(8 * font_scale)
+        else:
+            tx = x
+        draw.text((tx, y + (cur_icon_sz - font_big.size) // 2), temp, fill=fg, font=font_big)
         temp_w = draw.textbbox((0, 0), temp, font=font_big)
-        y_desc = y + (font_big.size - font_sm.size)
-        draw.text((x + icon_offset + temp_w[2] + int(10 * font_scale), y_desc), desc, fill=fg, font=font_sm)
-        y += font_big.size + gap
+        desc_y = y + (cur_icon_sz - font_sm.size) // 2 + font_big.size - int(4 * font_scale)
+        draw.text((tx, desc_y), desc, fill=MED_GRAY, font=font_sm)
+        y += max(cur_icon_sz, font_big.size) + gap
 
-    # ── today min/max ──────────────────────────────────────────────────
+    # ── hourly snapshot ────────────────────────────────────────────────
     if today:
-        t_min = today.get("temp_min")
-        t_max = today.get("temp_max")
-        if t_min is not None and t_max is not None:
-            lo = _convert_temp_short(t_min, units)
-            hi = _convert_temp_short(t_max, units)
-            suffix = _unit_suffix(units)
-            range_text = f"{lo} – {hi}{suffix}"
-
-            draw.text((x, y), range_text, fill=fg, font=font_med)
-            # Colour code min/max
-            lo_bbox = draw.textbbox((x, y), lo, font=font_med)
-            draw.text((x, y), lo, fill=BLUE, font=font_med)
-
-            sep_text = f"{lo} – "
-            sep_bbox = draw.textbbox((x, y), sep_text, font=font_med)
-            draw.text((sep_bbox[2], y), f"{hi}{suffix}", fill=RED, font=font_med)
-
-            y += font_med.size + int(6 * font_scale)
-
-        # hourly snapshot
         hourly = today.get("hourly", {})
         if hourly:
             slot_labels_12 = {"8am": "8am", "noon": "Noon", "3pm": "3pm", "8pm": "8pm"}
@@ -493,22 +507,57 @@ def _draw_weather(
             slot_labels = slot_labels_12 if time_format == "12h" else slot_labels_24
             slot_x = x
             slot_w = w // max(len(hourly), 1)
+            icon_sz  = int(slot_w * 0.6)              # icon fills ~65% of slot width
+            inner    = int(4 * font_scale)
+            label_h  = font_sm.size + inner
+            temp_h   = font_sm_bold.size + inner
+            box_h    = label_h + icon_sz + temp_h + inner
             for key in ["8am", "noon", "3pm", "8pm"]:
                 if key not in hourly:
                     continue
-                temp_val = _convert_temp_short(hourly[key], units)
-                lbl = slot_labels.get(key, key)
-                draw.text((slot_x, y), lbl, fill=LIGHT_GRAY, font=font_sm)
-                draw.text((slot_x, y + font_sm.size + 2), temp_val, fill=fg, font=font_sm_bold)
+                slot_data = hourly[key]
+                if isinstance(slot_data, dict):
+                    temp_val   = _convert_temp_short(slot_data.get("temp"), units)
+                    icon_path  = slot_data.get("icon_path")
+                else:
+                    temp_val   = _convert_temp_short(slot_data, units)
+                    icon_path  = None
+                lbl   = slot_labels.get(key, key)
+                box_w = slot_w - int(4 * font_scale)
+                # Row 1: time label (centred)
+                lbl_w = draw.textbbox((0, 0), lbl, font=font_sm)[2]
+                draw.text(
+                    (slot_x + (box_w - lbl_w) // 2, y + inner // 2),
+                    lbl, fill=DARK_GRAY, font=font_sm,
+                )
+                # Row 2: weather icon (centred), fallback to short symbol text
+                icon_y = y + label_h
+                icon = _load_weather_icon(icon_path, icon_sz)
+                if icon:
+                    icon_x = slot_x + (box_w - icon_sz) // 2
+                    _paste_icon(img, icon, icon_x, icon_y)
+                else:
+                    sym = WEATHER_SYMBOLS_SHORT.get(
+                        slot_data.get("code", 0) if isinstance(slot_data, dict) else 0, ""
+                    )
+                    sym_display = _truncate_text(draw, sym, font_sm, box_w - inner * 2)
+                    draw.text((slot_x + inner, icon_y + (icon_sz - font_sm.size) // 2),
+                              sym_display, fill=MED_GRAY, font=font_sm)
+                # Row 3: temperature (centred bold)
+                temp_w2 = draw.textbbox((0, 0), temp_val, font=font_sm_bold)[2]
+                draw.text(
+                    (slot_x + (box_w - temp_w2) // 2, y + label_h + icon_sz),
+                    temp_val, fill=BLACK, font=font_sm_bold,
+                )
                 slot_x += slot_w
-            y += font_sm.size * 2 + int(8 * font_scale)
+            y += box_h + int(6 * font_scale)
 
         # divider
         draw.line([(x, y), (x + w, y)], fill=LIGHT_GRAY, width=1)
         y += gap
 
     # ── forecast ───────────────────────────────────────────────────────
-    forecast_icon_size = font_sm_bold.size + 4
+    forecast_icon_size = int(56 * font_scale)
     for day in forecast:
         date_label = day.get("date", "")
         code = day.get("weathercode", 0)
@@ -519,20 +568,24 @@ def _draw_weather(
         hi = _convert_temp_short(t_max, units)
         suffix = _unit_suffix(units)
 
+        # Row 1: day label
         draw.text((x, y), date_label, fill=fg, font=font_sm_bold)
-        y += font_sm_bold.size + 2
+        y += font_sm_bold.size + int(10 * font_scale)
 
-        # weather icon + description + temp range
+        # Row 2: icon + condition description (vertically centred on icon)
         fc_icon = _load_weather_icon(day.get("icon_path"), forecast_icon_size)
         if fc_icon:
             _paste_icon(img, fc_icon, x, y)
             desc_x = x + forecast_icon_size + int(6 * font_scale)
         else:
             desc_x = x
+        desc_y = y + (forecast_icon_size - font_sm.size) // 2
+        draw.text((desc_x, desc_y), desc, fill=fg, font=font_sm)
+        y += forecast_icon_size + int(4 * font_scale)
 
-        desc_text = f"{desc}   {lo}–{hi}{suffix}"
-        draw.text((desc_x, y), desc_text, fill=fg, font=font_sm)
-        y += max(font_sm.size, forecast_icon_size) + gap
+        # Row 3: temp range
+        draw.text((x, y), f"{lo}–{hi}{suffix}", fill=fg, font=font_sm)
+        y += font_sm.size + gap
 
         # divider
         draw.line([(x, y), (x + w, y)], fill=LIGHT_GRAY, width=1)
