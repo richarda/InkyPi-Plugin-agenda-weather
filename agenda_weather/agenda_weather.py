@@ -1,5 +1,6 @@
 from plugins.base_plugin.base_plugin import BasePlugin
 from plugins.agenda_weather.constants import LOCALE_MAP, LABELS, FONT_SIZES, WEATHER_ICONS
+from plugins.agenda_weather.render.pil_renderer import render_dashboard
 from PIL import ImageColor
 import icalendar
 import recurring_ical_events
@@ -110,23 +111,28 @@ class AgendaWeather(BasePlugin):
         print(f"[AgendaWeather] Weather location from settings: lat={latitude}, lon={longitude}")
         weather_data = self.fetch_weather_data(timezone, locale_code, latitude, longitude)
 
-        template_params = {
-            "view": view,
-            "events": events,
-            "current_dt": current_dt.replace(minute=0, second=0, microsecond=0).isoformat(),
-            "timezone": timezone,
-            "plugin_settings": display_settings,
-            "time_format": time_format,
-            "font_scale": FONT_SIZES.get(settings.get("fontSize", "normal")),
-            "locale_code": locale_code,
-            "labels": labels,
-            "weather": weather_data
-        }
+        # Determine temperature units from settings (default to imperial)
+        units = settings.get('units', 'imperial')
+        if units not in ('metric', 'imperial', 'standard'):
+            units = 'imperial'
 
-        image = self.render_image(dimensions, "seniorDashboard_allDay.html", "seniorDashboard_allDay.css", template_params)
+        image = render_dashboard(
+            dimensions=dimensions,
+            events=events,
+            weather=weather_data,
+            current_dt=current_dt,
+            timezone_str=timezone,
+            time_format=time_format,
+            labels=labels,
+            locale_code=locale_code,
+            font_scale=FONT_SIZES.get(settings.get("fontSize", "normal"), 1.0),
+            bg_color=display_settings.get("backgroundColor", "#ffffff"),
+            text_color=display_settings.get("textColor", "#000000"),
+            units=units,
+        )
 
         if not image:
-            raise RuntimeError("Failed to take screenshot, please check logs.")
+            raise RuntimeError("Failed to render dashboard image.")
         return image
     
     def fetch_ics_events(self, calendar_urls, colors, tz, start_range, end_range, current_dt):
@@ -316,7 +322,7 @@ class AgendaWeather(BasePlugin):
                 # Extract hourly temps at 08:00, 12:00, and 15:00 for today
                 hourly_times = data.get("hourly", {}).get("time", [])
                 hourly_temps = data.get("hourly", {}).get("temperature_2m", [])
-                target_hours = {8: "8am", 12: "noon", 15: "3pm"}
+                target_hours = {8: "8am", 12: "noon", 15: "3pm", 20: "8pm"}
                 hourly_today = {}
                 for idx, t in enumerate(hourly_times):
                     if t.startswith(today_str) and idx < len(hourly_temps):

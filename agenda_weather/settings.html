@@ -47,6 +47,17 @@
     </div>
 </div>
 
+<div class="form-group">
+    <div class="form-group nowrap">
+        <label for="units" class="form-label">Temperature Units:</label>
+        <select id="units" name="units" class="form-input">
+            <option value="imperial">°F (Fahrenheit)</option>
+            <option value="metric">°C (Celsius)</option>
+            <option value="standard">K (Kelvin)</option>
+        </select>
+    </div>
+</div>
+
 <div id="mapModal" class="modal">
     <div class="modal-content">
         <span class="close-button" onclick="closeModal('mapModal')">×</span>
@@ -110,6 +121,7 @@
         // populate language dropdown
         document.getElementById('language').value = language;
         document.getElementById('fontSize').value = fontSize;
+        document.getElementById('units').value = pluginSettings && pluginSettings.units ? pluginSettings.units : 'imperial';
         document.getElementById('latitude').value = latitude;
         document.getElementById('longitude').value = longitude;
 
